@@ -1,5 +1,12 @@
+# Secrets: Binance API keys (live and testnet)
 .env
 
-old/
-BTCUSDT/
+# Bot order logs, created when the notebook bot runs
 logs/
+
+# Web: installed npm packages and built widget files
+node_modules/
+dist/
+
+# Old experiments, kept locally for reference only
+old/

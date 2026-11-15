@@ -1,0 +1,13 @@
+# Not needed by the Railway service: research notebook and its extras
+notebooks/
+requirements-dev.txt
+.ipynb_checkpoints/
+
+# Python caches and local environments
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Secrets stay in Railway variables, never in the image
+.env

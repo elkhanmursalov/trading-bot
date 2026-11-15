@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@elkhanmursalov/crypto-trading-widget": ["../../packages/crypto-trading-widget/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

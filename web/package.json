@@ -1,0 +1,10 @@
+{
+  "name": "trading-bot-web",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev": "pnpm --filter playground dev",
+    "build": "pnpm --filter @elkhanmursalov/crypto-trading-widget build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

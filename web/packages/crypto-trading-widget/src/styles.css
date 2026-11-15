@@ -1,0 +1,168 @@
+/* All classes are prefixed with btw- so they never clash with the host app's styles.
+   Host apps can re-theme by overriding these variables on .btw-root. */
+.btw-root {
+  --btw-bg: #ffffff;
+  --btw-text: #111827;
+  --btw-muted: #6b7280;
+  --btw-border: #e5e7eb;
+  --btw-up: #16a34a;
+  --btw-down: #dc2626;
+  --btw-warn: #d97706;
+  --btw-legend-bg: rgba(255, 255, 255, 0.85);
+  --btw-accent: #f0b90b;
+  --btw-hover-bg: #f3f4f6;
+
+  background: var(--btw-bg);
+  color: var(--btw-text);
+  border: 1px solid var(--btw-border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+}
+
+.btw-root[data-theme="dark"] {
+  --btw-bg: #0f1115;
+  --btw-text: #e5e7eb;
+  --btw-muted: #8b93a1;
+  --btw-border: #262b35;
+  --btw-up: #22c55e;
+  --btw-down: #ef4444;
+  --btw-warn: #f59e0b;
+  --btw-legend-bg: rgba(15, 17, 21, 0.85);
+  --btw-hover-bg: #1b1f27;
+}
+
+.btw-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--btw-border);
+}
+
+.btw-symbol {
+  flex: none;
+  margin-right: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btw-intervals {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.btw-intervals::-webkit-scrollbar {
+  display: none;
+}
+
+.btw-interval-button {
+  flex: none;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--btw-muted);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btw-interval-button:hover {
+  background: var(--btw-hover-bg);
+  color: var(--btw-text);
+}
+
+.btw-interval-button[aria-pressed="true"] {
+  color: var(--btw-text);
+  background: var(--btw-hover-bg);
+  box-shadow: inset 0 -2px 0 var(--btw-accent);
+}
+
+.btw-interval-button:focus-visible {
+  outline: 2px solid var(--btw-accent);
+  outline-offset: 1px;
+}
+
+.btw-status {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--btw-muted);
+}
+
+.btw-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--btw-warn);
+}
+
+.btw-status[data-status="live"]::before {
+  background: var(--btw-up);
+}
+
+.btw-chart {
+  position: relative;
+}
+
+.btw-chart-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.btw-legend {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  max-width: calc(100% - 90px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--btw-legend-bg);
+  color: var(--btw-muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.btw-legend b {
+  font-weight: 500;
+  color: var(--btw-text);
+}
+
+.btw-legend[data-direction="up"] b,
+.btw-legend[data-direction="up"] .btw-legend-change {
+  color: var(--btw-up);
+}
+
+.btw-legend[data-direction="down"] b,
+.btw-legend[data-direction="down"] .btw-legend-change {
+  color: var(--btw-down);
+}
+
+.btw-legend-time {
+  color: var(--btw-text);
+}
+
+.btw-error {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  padding: 8px 12px;
+  border: 1px solid var(--btw-border);
+  border-radius: 6px;
+  background: var(--btw-bg);
+  color: var(--btw-down);
+}
