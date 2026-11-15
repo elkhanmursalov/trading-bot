@@ -10,3 +10,7 @@ dist/
 
 # Old experiments, kept locally for reference only
 old/
+
+# Python: virtual environments and caches
+.venv/
+__pycache__/

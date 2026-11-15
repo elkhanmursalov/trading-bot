@@ -1,0 +1,6 @@
+# Extra packages for the research notebook (not installed on Railway)
+-r requirements.txt
+ipykernel
+matplotlib
+seaborn
+plotly
