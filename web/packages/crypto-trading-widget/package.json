@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "Live crypto candlestick chart with crosshair, embeddable in React / Next.js apps",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elkhanmursalov/trading-bot.git",
+    "directory": "web/packages/crypto-trading-widget"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "files": ["dist"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",

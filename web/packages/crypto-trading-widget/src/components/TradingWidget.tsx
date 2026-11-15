@@ -32,7 +32,7 @@ export interface TradingWidgetProps {
   /** Number of past candles to load (max 1000). */
   historyLimit?: number;
   /**
-   * Base URL of the trading backend, e.g. "https://your-app.up.railway.app".
+   * Base URL of the trading backend, e.g. "https://api.example.com".
    * Adds the bot status and the orders panel (open orders, execution history).
    * Without it the widget shows only the chart.
    */

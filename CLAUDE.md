@@ -34,6 +34,7 @@ trading-bot/
 │   ├── requirements-dev.txt  extras for the notebook
 │   └── .dockerignore         keeps the notebook, dev files, caches and .env out of the deployed service
 ├── web/                      pnpm workspace: React widget + playground
+├── .github/workflows/        publish-widget.yml: publishes the widget to GitHub Packages on a widget-v* tag
 ├── .env  .gitignore  CLAUDE.md   stay in the root
 ├── logs/                     CSV log of the notebook's own bot (git-ignored)
 ├── BTCUSDT/                  old CSV candles, not used for current work
@@ -45,7 +46,7 @@ trading-bot/
 - **Run locally:** from `backend/`, `BOT_MODE=dry_run .venv/bin/uvicorn app.main:app --reload`. Own venv in `backend/.venv`. API docs at `/docs`.
 - **Settings (environment variables):**
   - `BOT_MODE`: `off` (default, API only), `dry_run` (decides, no orders), `testnet` (sends orders). Only one place may run `testnet` at a time (Railway, local backend or notebook bot), or orders double.
-  - `CORS_ORIGINS`: comma-separated allowed origins (default `http://localhost:5173`).
+  - `CORS_ORIGINS`: allowed origins separated by commas (spaces are ignored), each a full origin with no trailing slash, e.g. `http://localhost:5173,https://app-one.com`. Default `http://localhost:5173`.
   - Optional: `SYMBOL`, `INTERVAL`, `TRADE_SIZE_USDT`.
 - **Endpoints (read-only):** `/api/health`, `/api/position`, `/api/open-orders`, `/api/trades?days=30`, `/api/bot`, `/api/stream` (Server-Sent Events with two event types, `account` and `bot`; each is sent on connect and again whenever it changes; `backend/app/events.py` is the hub that fans messages out).
 - **No database, no CSV on the server:** position and history come from Binance testnet (`myTrades`, open orders). The position is the last order if it was a buy. Executions combine the fills of each order into one row. Testnet resets wipe the history, which is accepted.
@@ -54,7 +55,7 @@ trading-bot/
 
 ## Deployment (Railway)
 
-- **Live URL:** `https://api.example.com` (always on, bot runs in `testnet` mode).
+- **Live URL:** kept out of the repo; the local copy is `VITE_API_URL` in `web/apps/playground/.env.local` (git-ignored). Always on, bot runs in `testnet` mode.
 - **Service settings:** root directory `backend`; start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`; variable `PORT=8000`; health check `/api/health`.
 - **Variables:** the two testnet keys, `BOT_MODE`, `CORS_ORIGINS`, `RAILWAY_DEPLOYMENT_OVERLAP_SECONDS=0`.
 - Not yet confirmed: that Railway really leaves the notebook out of the build (`.dockerignore`).
@@ -81,8 +82,9 @@ trading-bot/
 - **Chart:** live candles with crosshair and OHLC legend, volume pane, one-row interval buttons in the header. Candles and live ticks come straight from Binance (REST + WebSocket).
 - **Theme:** only through the `theme` prop (`"light"` default, `"dark"`, `"auto"` = follows the system setting). The widget has no theme switch of its own.
 - **Orders panel and bot status:** shown only when the `apiBaseUrl` prop is set (the backend URL). Below the chart: position line and two tabs, Open orders and Execution history (30 days). The header shows a bot badge (running / dry run / off / error / not responding) with the next check time. All of it comes from one `/api/stream` connection (`useAccountStream`), not from Binance, because it needs the secret key. Without `apiBaseUrl` the widget is just the chart.
-- **Playground:** `apps/playground/.env.development` sets `VITE_API_URL` to the Railway URL. For a local backend run `VITE_API_URL=http://localhost:8000 pnpm dev`. The backend's `CORS_ORIGINS` must include the playground origin (`http://localhost:5173`).
-- **Consumers:** two Next.js apps in separate repos install the package from GitHub Packages (the scope must be the GitHub account `elkhanmursalov`). The package ships ESM + CSS with a `"use client"` banner; React and lightweight-charts are external.
+- **Playground:** `apps/playground/.env.local` (git-ignored) sets `VITE_API_URL` to the Railway URL. For a local backend run `VITE_API_URL=http://localhost:8000 pnpm dev`. The backend's `CORS_ORIGINS` must include the playground origin (`http://localhost:5173`).
+- **Consumers:** two Next.js apps in separate repos install the package from GitHub Packages (the scope must be the GitHub account `elkhanmursalov`). The package ships ESM + CSS with a `"use client"` banner; React and lightweight-charts are external. Install and usage steps for those apps are in the package's `README.md` (`.npmrc` with a `read:packages` token, `import ".../style.css"`, the app domain added to the backend's `CORS_ORIGINS`).
+- **Release:** bump `version` in the package's `package.json`, commit, push a tag `widget-v<version>`. The workflow `.github/workflows/publish-widget.yml` checks that the tag matches the version, typechecks, builds and publishes with GitHub's built-in token.
 - **Multi-coin later:** the `symbol` prop already works. Still missing: price decimals from Binance exchange info (fixed at 2) and a symbol picker in the header.
 
 ## Preferences
@@ -112,7 +114,7 @@ Done:
 - [x] Older candles load when the chart is scrolled near its left edge (1000 per page, like Binance/TradingView); fill arrows and SMAs extend to them. The view stays in place while a page loads.
 
 To do:
-- [ ] Stage 6 – Publish the widget to GitHub Packages, usage example for the Next.js apps
+- [ ] Stage 6 – Publish the widget to GitHub Packages: setup done (publish config, workflow, README); first release `widget-v0.1.0` not yet pushed
 
 Later:
 - [ ] Multi-coin: price decimals from Binance exchange info, symbol picker
