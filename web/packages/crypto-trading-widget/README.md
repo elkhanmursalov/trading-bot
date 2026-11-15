@@ -40,7 +40,7 @@ With the bot's orders, history and status:
 - You can render the widget straight from an App Router page (a server component), because the package is already marked `"use client"`.
 - `NEXT_PUBLIC_API_URL` is the backend's URL, set in the app's `.env.local`: `NEXT_PUBLIC_API_URL=https://api.example.com`.
 - The backend only accepts browsers from the origins in its `CORS_ORIGINS` variable, so add the app's origins there. Separate them with commas; each is the full origin with no trailing slash: `CORS_ORIGINS=http://localhost:3000,https://app-one.com,https://app-two.com`.
-- The widget fills the width of its parent element. Its height is the chart height plus the header and the orders panel.
+- The widget fills the width of its parent element. Its height is the chart height plus the header and the orders panel, unless `fillHeight` is set: then it fills the parent's height too.
 
 ## Props
 
@@ -53,6 +53,7 @@ With the bot's orders, history and status:
 | `intervals` | `Interval[]` | `["1m", "5m", "15m", "1h", "4h", "1d"]` | Interval buttons in the header, in this order (exported as `DEFAULT_INTERVALS`). |
 | `onIntervalChange` | `(interval: Interval) => void` | none | Called when the user picks another interval. |
 | `chartHeight` | `number` | `480` | Chart height in pixels (price and volume panes). |
+| `fillHeight` | `boolean` | `false` | Take the parent's full height. The chart keeps `chartHeight`, the orders panel stretches to the bottom and its table scrolls inside it. The parent needs a set height (e.g. `height: 100vh` or a flex/grid cell). Off: the widget is as tall as its content and the table is capped at 260px. |
 | `historyLimit` | `number` | `500` | Candles loaded at first (max 1000). Older ones load when the user scrolls left. |
 | `className` | `string` | none | Extra class on the root element, e.g. for margins. |
 | `restUrl` | `string` | Binance | Override for the Binance REST base URL. |

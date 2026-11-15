@@ -29,6 +29,11 @@ export interface TradingWidgetProps {
   theme?: Theme;
   /** Chart height in pixels (price + volume panes). */
   chartHeight?: number;
+  /**
+   * Take the parent's full height: the chart keeps `chartHeight` and the orders panel stretches to the bottom,
+   * scrolling inside itself. The parent needs a set height.
+   */
+  fillHeight?: boolean;
   /** Number of past candles to load (max 1000). */
   historyLimit?: number;
   /**
@@ -53,6 +58,7 @@ export function TradingWidget({
   onIntervalChange,
   theme = "light",
   chartHeight = 480,
+  fillHeight = false,
   historyLimit = 500,
   apiBaseUrl,
   restUrl,
@@ -75,7 +81,11 @@ export function TradingWidget({
   };
 
   return (
-    <div className={["btw-root", className].filter(Boolean).join(" ")} data-theme={resolvedTheme}>
+    <div
+      className={["btw-root", className].filter(Boolean).join(" ")}
+      data-theme={resolvedTheme}
+      data-fill={fillHeight || undefined}
+    >
       <div className="btw-header">
         <span className="btw-symbol">{symbol}</span>
         <IntervalBar intervals={intervals} selected={interval} onSelect={selectInterval} />

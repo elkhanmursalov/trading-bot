@@ -36,6 +36,18 @@
   --btw-head-bg: #14171d;
 }
 
+/* Fill mode: the widget is a column as tall as its parent; only the orders panel stretches */
+.btw-root[data-fill] {
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.btw-root[data-fill] > * {
+  flex: none;
+}
+
 .btw-header {
   display: flex;
   flex-wrap: wrap;
