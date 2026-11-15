@@ -9,17 +9,26 @@ import {
   type HistogramData,
   type IChartApi,
   type ISeriesApi,
+  type LogicalRange,
   type MouseEventParams,
   type UTCTimestamp,
 } from "lightweight-charts";
 
 import "../../styles/chart.css";
-import { fetchCandles, subscribeCandles } from "../../data/binance";
+import { MAX_LIMIT, fetchCandles, subscribeCandles } from "../../data/binance";
+import { useFillMarkers } from "../../hooks/chart/useFillMarkers";
+import { useMovingAverages } from "../../hooks/chart/useMovingAverages";
+import { useOrderLines } from "../../hooks/chart/useOrderLines";
+import { usePositionLine } from "../../hooks/chart/usePositionLine";
+import type { AccountSnapshot } from "../../types/backend";
 import { formatChange, formatPrice, formatTimeUtc, formatVolume } from "../../utils/format";
 import { CHART_COLORS, type ChartColors } from "../../styles/chartColors";
-import type { Candle, Interval, ResolvedTheme, StreamStatus } from "../../types/widget";
+import type { Candle, Interval, MovingAverageSettings, ResolvedTheme, StreamStatus } from "../../types/widget";
+import { smaAtTime } from "../../utils/indicators";
 
 const PRICE_PANE_STRETCH = 3;
+/** Older candles are loaded when the left edge of the view is closer than this many candles to the first loaded one. */
+const LOAD_OLDER_EDGE_CANDLES = 20;
 const VOLUME_PANE_STRETCH = 1;
 
 export interface PriceChartProps {
@@ -31,6 +40,10 @@ export interface PriceChartProps {
   restUrl?: string;
   streamUrl?: string;
   onStatusChange?: (status: StreamStatus) => void;
+  /** Account data from the backend; draws open orders, the position and fills on the chart. */
+  account?: AccountSnapshot | null;
+  /** Strategy SMAs to draw; null hides them. */
+  movingAverages?: MovingAverageSettings | null;
 }
 
 interface ChartHandles {
@@ -72,7 +85,7 @@ function themeOptions(colors: ChartColors) {
   };
 }
 
-/** Candlestick chart with a volume pane, hover crosshair, OHLC legend and live updates. */
+/** Candlestick chart with a volume pane, hover crosshair, OHLC legend, live updates and account overlays. */
 export function PriceChart({
   symbol,
   interval,
@@ -82,17 +95,30 @@ export function PriceChart({
   restUrl,
   streamUrl,
   onStatusChange,
+  account,
+  movingAverages = null,
 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const handlesRef = useRef<ChartHandles | null>(null);
   const colorsRef = useRef<ChartColors>(CHART_COLORS[theme]);
   const volumesRef = useRef<Map<number, number>>(new Map());
+  const candlesRef = useRef<Candle[]>([]);   // loaded candles, oldest first (for the SMAs)
   const statusRef = useRef(onStatusChange);
   statusRef.current = onStatusChange;
 
   const [latest, setLatest] = useState<Candle | null>(null);
   const [hovered, setHovered] = useState<Candle | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [candleSeries, setCandleSeries] = useState<ISeriesApi<"Candlestick"> | null>(null);
+  const [firstCandleTime, setFirstCandleTime] = useState<number | null>(null);
+  const [chartApi, setChartApi] = useState<IChartApi | null>(null);
+  const [historyVersion, setHistoryVersion] = useState(0);
+
+  const colors = CHART_COLORS[theme];
+  useOrderLines(candleSeries, account?.open_orders, colors);
+  usePositionLine(candleSeries, account?.position, latest?.close ?? null, account?.quote_asset ?? "", colors);
+  useFillMarkers(candleSeries, account?.executions, interval, firstCandleTime, colors);
+  useMovingAverages(chartApi, candlesRef, historyVersion, latest, movingAverages, colors);
 
   // Create the chart once; remove it on unmount.
   useEffect(() => {
@@ -135,7 +161,11 @@ export function PriceChart({
     chart.subscribeCrosshairMove(onCrosshairMove);
 
     handlesRef.current = { chart, candles, volume };
+    setCandleSeries(candles);
+    setChartApi(chart);
     return () => {
+      setCandleSeries(null);
+      setChartApi(null);
       chart.unsubscribeCrosshairMove(onCrosshairMove);
       chart.remove();
       handlesRef.current = null;
@@ -159,7 +189,8 @@ export function PriceChart({
     });
   }, [theme]);
 
-  // Load history, then follow the live stream. Restarts when symbol/interval change.
+  // Load history, then follow the live stream; load older candles when scrolled to the left edge.
+  // Restarts when symbol/interval change.
   useEffect(() => {
     const handles = handlesRef.current;
     if (!handles) return;
@@ -168,12 +199,26 @@ export function PriceChart({
     let ready = false; // history loaded; until then live updates are buffered
     let pending: Candle[] = [];
     let lastTime = 0;
+    let loadingOlder = false;
+    let reachedFirstCandle = false; // Binance has no older candles for this symbol and interval
+
+    const showCandles = () => {
+      const candles = candlesRef.current;
+      handles.candles.setData(candles.map(toBar));
+      handles.volume.setData(candles.map((c) => toVolumeBar(c, colorsRef.current)));
+      volumesRef.current = new Map(candles.map((c) => [c.time, c.volume]));
+      setFirstCandleTime(candles[0]?.time ?? null);
+      setHistoryVersion((v) => v + 1);
+    };
 
     const applyCandle = (c: Candle) => {
       if (c.time < lastTime) return; // the chart only accepts the latest candle or a newer one
       handles.candles.update(toBar(c));
       handles.volume.update(toVolumeBar(c, colorsRef.current));
       volumesRef.current.set(c.time, c.volume);
+      const candles = candlesRef.current;
+      if (candles.at(-1)?.time === c.time) candles[candles.length - 1] = c;
+      else candles.push(c);
       lastTime = c.time;
       setLatest(c);
     };
@@ -181,11 +226,12 @@ export function PriceChart({
     const loadHistory = async () => {
       ready = false;
       try {
-        const history = await fetchCandles(symbol, interval, historyLimit, restUrl, controller.signal);
+        const history = await fetchCandles(symbol, interval, { limit: historyLimit, restUrl, signal: controller.signal });
         if (controller.signal.aborted) return;
-        handles.candles.setData(history.map(toBar));
-        handles.volume.setData(history.map((c) => toVolumeBar(c, colorsRef.current)));
-        volumesRef.current = new Map(history.map((c) => [c.time, c.volume]));
+        // After a reconnect, older candles loaded by scrolling are kept in front of the fresh ones.
+        const firstFresh = history[0]?.time ?? Infinity;
+        candlesRef.current = [...candlesRef.current.filter((c) => c.time < firstFresh), ...history];
+        showCandles();
         lastTime = history.at(-1)?.time ?? 0;
         if (history.length) setLatest(history[history.length - 1]);
         ready = true;
@@ -198,6 +244,34 @@ export function PriceChart({
         }
       }
     };
+
+    const loadOlder = async () => {
+      const first = candlesRef.current[0];
+      if (!ready || loadingOlder || reachedFirstCandle || !first) return;
+      loadingOlder = true;
+      try {
+        const older = await fetchCandles(symbol, interval, {
+          limit: MAX_LIMIT,
+          endTime: first.time * 1000 - 1,
+          restUrl,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        if (older.length < MAX_LIMIT) reachedFirstCandle = true;
+        const firstLoaded = candlesRef.current[0].time;
+        candlesRef.current = [...older.filter((c) => c.time < firstLoaded), ...candlesRef.current];
+        showCandles();
+      } catch {
+        // A failed page is retried on the next scroll; the candles already shown stay.
+      } finally {
+        loadingOlder = false;
+      }
+    };
+
+    const onVisibleRangeChange = (range: LogicalRange | null) => {
+      if (range && range.from < LOAD_OLDER_EDGE_CANDLES) void loadOlder();
+    };
+    handles.chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleRangeChange);
 
     void loadHistory();
     const unsubscribe = subscribeCandles(
@@ -214,12 +288,22 @@ export function PriceChart({
     return () => {
       controller.abort();
       unsubscribe();
+      handles.chart.timeScale().unsubscribeVisibleLogicalRangeChange(onVisibleRangeChange);
+      candlesRef.current = [];
       setLatest(null);
+      setFirstCandleTime(null);
     };
   }, [symbol, interval, historyLimit, restUrl, streamUrl]);
 
   const shown = hovered ?? latest;
   const direction = shown && shown.close >= shown.open ? "up" : "down";
+  const averages =
+    shown && movingAverages
+      ? [
+          { window: movingAverages.fast, color: colors.smaFast },
+          { window: movingAverages.slow, color: colors.smaSlow },
+        ].map((a) => ({ ...a, value: smaAtTime(candlesRef.current, shown.time, a.window) }))
+      : [];
 
   return (
     <div className="btw-chart" style={{ height }}>
@@ -233,6 +317,13 @@ export function PriceChart({
           <span>C <b>{formatPrice(shown.close)}</b></span>
           <span className="btw-legend-change">{formatChange(shown.open, shown.close)}</span>
           <span>Vol <b>{formatVolume(shown.volume)}</b></span>
+          {averages.map(({ window, color, value }) =>
+            value === null ? null : (
+              <span key={window}>
+                SMA {window} <b style={{ color }}>{formatPrice(value)}</b>
+              </span>
+            ),
+          )}
         </div>
       )}
       {error && <div className="btw-error">Price data unavailable: {error}</div>}

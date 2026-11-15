@@ -1,7 +1,7 @@
 import "../../styles/chart.css";
 import type { Interval } from "../../types/widget";
 
-/** Button text per interval; days and weeks in capitals, as on most exchanges. */
+/** Button text per interval; days in capitals, as on most exchanges. */
 const INTERVAL_LABELS: Record<Interval, string> = {
   "1m": "1m",
   "5m": "5m",

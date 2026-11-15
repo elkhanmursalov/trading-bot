@@ -63,6 +63,11 @@ export function TradingWidget({
   const resolvedTheme = useResolvedTheme(theme);
   const [status, setStatus] = useState<StreamStatus>("connecting");
   const { account, bot, status: accountStatus } = useAccountStream(apiBaseUrl);
+  // The bot decides on its own interval only, so its SMAs are drawn only when the chart shows that interval.
+  const movingAverages =
+    bot?.fast_window && bot.slow_window && bot.interval === interval
+      ? { fast: bot.fast_window, slow: bot.slow_window }
+      : null;
 
   const selectInterval = (next: Interval) => {
     setInterval(next);
@@ -90,6 +95,8 @@ export function TradingWidget({
         restUrl={restUrl}
         streamUrl={streamUrl}
         onStatusChange={setStatus}
+        account={account}
+        movingAverages={movingAverages}
       />
       {apiBaseUrl && <OrdersPanel account={account} stream={accountStatus} />}
     </div>

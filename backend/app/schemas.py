@@ -52,10 +52,12 @@ class AccountSnapshot(BaseModel):
 
 
 class BotStatus(BaseModel):
-    """What the bot did last and when it checks next."""
+    """What the bot did last and when it checks next, plus the strategy settings (so a chart can draw the same SMAs)."""
     mode: str
     symbol: str
     interval: str
+    fast_window: int      # candles in the fast SMA
+    slow_window: int      # candles in the slow SMA
     last_check: int | None
     last_message: str | None
     last_error: str | None

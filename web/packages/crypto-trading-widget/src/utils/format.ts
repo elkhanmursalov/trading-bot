@@ -51,7 +51,7 @@ export function formatAssetAmount(value: number, asset: string): string {
   return `${text} ${asset}`.trim();
 }
 
-/** "Price (USDT)"; plain "Price" when no asset name is known (e.g. an older backend). */
+/** "Price (USDT)"; plain "Price" when no asset name is known. */
 export function withUnit(label: string, unit: string): string {
   return unit ? `${label} (${unit})` : label;
 }

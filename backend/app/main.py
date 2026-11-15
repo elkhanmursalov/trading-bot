@@ -1,7 +1,4 @@
-"""FastAPI app: read-only account data for the widget, a live stream, and the bot as a background task.
-
-Run locally from backend/:  .venv/bin/uvicorn app.main:app --reload
-"""
+"""FastAPI app: read-only account data for the widget, a live stream, and the bot as a background task."""
 
 import asyncio
 import logging

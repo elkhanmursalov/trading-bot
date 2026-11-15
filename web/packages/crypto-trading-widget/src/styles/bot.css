@@ -1,10 +1,11 @@
-/* Bot badge: colour per state, next-check text */
-.btw-badge[data-tone="error"]::before {
-  background: var(--btw-down);
+/* No dot while the bot is fine, so it is not mistaken for the green "Price live" dot. */
+.btw-badge[data-tone="ok"]::before,
+.btw-badge[data-tone="muted"]::before {
+  display: none;
 }
 
-.btw-badge[data-tone="muted"]::before {
-  background: var(--btw-muted);
+.btw-badge[data-tone="error"]::before {
+  background: var(--btw-down);
 }
 
 .btw-badge[data-tone="error"] {

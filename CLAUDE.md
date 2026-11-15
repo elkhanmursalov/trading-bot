@@ -14,6 +14,7 @@
   - Constants and config are named, never magic numbers or strings inline.
   - Remove dead code, unused imports and stale references after every change (including config files outside `src/`, such as aliases in `vite.config.ts`).
   - When a folder grows past about 6–8 files, propose grouping before adding more.
+  - **Comments:** a short line above a block saying what it is for is welcome (e.g. above each `useEffect`: "Create the chart once; remove it on unmount", "Colours follow the theme"), and so is a note on anything non-obvious (a reason, a Binance quirk, units or ordering). Never: instructions or next steps ("Run locally with..."), history ("older backends", "added in stage 3", "same as the notebook"), text that repeats the file name, or anything out of date. Docstrings and doc comments say what a function, type or prop is for. Instructions and history belong in CLAUDE.md or the commit message.
 
 ## Project overview
 
@@ -69,9 +70,10 @@ trading-bot/
   components/         TradingWidget.tsx; chart/ (PriceChart, IntervalBar); orders/ (OrdersPanel, OpenOrdersTable,
                       ExecutionsTable, PositionLine, SideCell); bot/ (BotBadge)
   data/               binance.ts (candles REST + WebSocket), useAccountStream.ts (backend SSE)
-  hooks/              useNow, useResolvedTheme
+  hooks/              useNow, useResolvedTheme; chart/ (useOrderLines, usePositionLine, useFillMarkers, useMovingAverages)
   types/              widget.ts (Candle, Interval, Theme...), backend.ts (shapes sent by the backend)
-  utils/              format.ts (numbers, times, asset amounts), botStatus.ts (bot badge wording)
+  utils/              format.ts (numbers, times, asset amounts), botStatus.ts (bot badge wording),
+                      chartOverlays.ts (fill markers, position profit/loss, line labels), indicators.ts (SMA)
   styles/             base.css, chart.css, orders.css, bot.css, chartColors.ts; each component imports its own CSS;
                       the build merges them into one style.css
   ```
@@ -103,10 +105,13 @@ Done:
 - [x] Repo layout (`backend/`, `web/`), pnpm workspace
 - [x] Backend (stage 2): FastAPI endpoints, SSE stream, bot as background task; the notebook imports the shared code
 - [x] Railway deploy (stage 5, done early): backend live and the bot running in `testnet` mode
-- [x] Stage 3 – Orders panel (Open orders / Execution history), bot status badge, live from `/api/stream`. Needs a Railway redeploy of the backend to show the bot badge and the asset names in the table headers.
+- [x] Stage 3 – Orders panel (Open orders / Execution history), bot status badge, live from `/api/stream`.
+- [x] Stage 4 – Chart overlays: open orders as dashed lines ("BUY 0.0002"), the position as a solid line at the entry price with live profit/loss (green/red, before fees), fills as arrows (green up = buy, red down = sell; "×3" when several fills share a candle)
+- [x] Strategy SMAs on the chart: fast (12, black/light grey) and slow (48, orange) lines plus their values in the legend, only on the bot's interval (1h). The windows come from the backend's bot status (`fast_window`, `slow_window`), so the chart always matches the bot.
+- [x] Bot badge: plain text while healthy ("Bot running: next check 12:00 UTC"); an amber or red dot only for problems, so it is not confused with the green "Price live" dot
+- [x] Older candles load when the chart is scrolled near its left edge (1000 per page, like Binance/TradingView); fill arrows and SMAs extend to them. The view stays in place while a page loads.
 
 To do:
-- [ ] Stage 4 – Chart overlays: open orders as dashed lines, open position line with live P/L, buy/sell fill markers
 - [ ] Stage 6 – Publish the widget to GitHub Packages, usage example for the Next.js apps
 
 Later:

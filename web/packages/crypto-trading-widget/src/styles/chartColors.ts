@@ -11,6 +11,8 @@ export interface ChartColors {
   down: string;
   upVolume: string;
   downVolume: string;
+  smaFast: string;
+  smaSlow: string;
 }
 
 export const CHART_COLORS: Record<ResolvedTheme, ChartColors> = {
@@ -24,6 +26,8 @@ export const CHART_COLORS: Record<ResolvedTheme, ChartColors> = {
     down: "#dc2626",
     upVolume: "rgba(22, 163, 74, 0.45)",
     downVolume: "rgba(220, 38, 38, 0.45)",
+    smaFast: "#111827",
+    smaSlow: "#f59e0b",
   },
   dark: {
     background: "#0f1115",
@@ -35,5 +39,7 @@ export const CHART_COLORS: Record<ResolvedTheme, ChartColors> = {
     down: "#ef4444",
     upVolume: "rgba(34, 197, 94, 0.45)",
     downVolume: "rgba(239, 68, 68, 0.45)",
+    smaFast: "#e5e7eb",
+    smaSlow: "#f59e0b",
   },
 };

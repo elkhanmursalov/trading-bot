@@ -10,6 +10,12 @@ export type Theme = ResolvedTheme | "auto";
 /** Connection state of the live price stream. */
 export type StreamStatus = "connecting" | "live" | "reconnecting";
 
+/** Window lengths of the strategy's moving averages, in candles. */
+export interface MovingAverageSettings {
+  fast: number;
+  slow: number;
+}
+
 /** One candle; `time` is the open time in seconds since epoch (UTC). */
 export interface Candle {
   time: number;

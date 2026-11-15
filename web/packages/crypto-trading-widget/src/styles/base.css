@@ -79,7 +79,6 @@
   background: var(--btw-warn);
 }
 
-.btw-status[data-status="live"]::before,
-.btw-badge[data-tone="ok"]::before {
+.btw-status[data-status="live"]::before {
   background: var(--btw-up);
 }

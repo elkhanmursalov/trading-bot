@@ -7,7 +7,8 @@ import pandas as pd
 from binance.client import Client
 
 from .account import AccountService, now_ms
-from .config import CHECK_DELAY_SECONDS, INTERVAL, MAX_SLEEP_STEP_SECONDS, TRADE_SIZE_USDT
+from .config import (CHECK_DELAY_SECONDS, FAST_WINDOW, INTERVAL, MAX_SLEEP_STEP_SECONDS, SLOW_WINDOW,
+                     TRADE_SIZE_USDT)
 from .events import EventHub
 from .exchange import SymbolRules, place_market_buy, place_market_sell
 from .schemas import BotStatus
@@ -44,6 +45,7 @@ class Bot:
         self._account = account
         self._hub = hub
         self.status = BotStatus(mode=mode, symbol=rules.symbol, interval=INTERVAL,
+                                fast_window=FAST_WINDOW, slow_window=SLOW_WINDOW,
                                 last_check=None, last_message=None, last_error=None, next_check=None)
 
     def _publish_status(self) -> None:

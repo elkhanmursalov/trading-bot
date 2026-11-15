@@ -52,6 +52,9 @@ export interface BotStatus {
   mode: BotMode;
   symbol: string;
   interval: string;
+  /** Candles in the fast / slow SMA. */
+  fast_window?: number;
+  slow_window?: number;
   last_check: number | null;
   last_message: string | null;
   last_error: string | null;

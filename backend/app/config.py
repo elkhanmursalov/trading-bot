@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # finds the project-root .env when run locally; no-op on Railway
 
-# Market and strategy (same values as the notebook)
+# Market and strategy
 BINANCE_PUBLIC_URL = "https://api.binance.com"   # public market data, no key
 SYMBOL = os.getenv("SYMBOL", "BTCUSDT")
 INTERVAL = os.getenv("INTERVAL", "1h")

@@ -43,18 +43,28 @@ function streamToCandle(k: StreamKline): Candle {
   };
 }
 
-/** Latest `limit` candles, oldest first; the last one is the candle still forming. */
+export interface FetchCandlesOptions {
+  limit: number;
+  /** Only candles that open before this time (ms since epoch); omitted means up to now. */
+  endTime?: number;
+  restUrl?: string;
+  signal?: AbortSignal;
+}
+
+/**
+ * Up to `limit` candles ending at `endTime` (or now), oldest first.
+ * Without `endTime` the last candle is the one still forming.
+ */
 export async function fetchCandles(
   symbol: string,
   interval: Interval,
-  limit: number,
-  restUrl: string = DEFAULT_REST_URL,
-  signal?: AbortSignal,
+  { limit, endTime, restUrl = DEFAULT_REST_URL, signal }: FetchCandlesOptions,
 ): Promise<Candle[]> {
   const url = new URL("/api/v3/klines", restUrl);
   url.searchParams.set("symbol", symbol.toUpperCase());
   url.searchParams.set("interval", interval);
   url.searchParams.set("limit", String(Math.min(limit, MAX_LIMIT)));
+  if (endTime !== undefined) url.searchParams.set("endTime", String(endTime));
 
   const response = await fetch(url, { signal });
   if (!response.ok) {

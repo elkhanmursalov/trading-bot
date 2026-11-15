@@ -1,8 +1,8 @@
-import "../../styles/bot.css";
-import { describeBot } from "../../utils/botStatus";
-import type { BotStatus } from "../../types/backend";
-import type { AccountStreamStatus } from "../../data/useAccountStream";
-import { useNow } from "../../hooks/useNow";
+import '../../styles/bot.css';
+import { describeBot } from '../../utils/botStatus';
+import type { BotStatus } from '../../types/backend';
+import type { AccountStreamStatus } from '../../data/useAccountStream';
+import { useNow } from '../../hooks/useNow';
 
 const REFRESH_MS = 30_000;
 
@@ -19,8 +19,12 @@ export function BotBadge({ bot, stream }: BotBadgeProps) {
 
   return (
     <span className="btw-badge" data-tone={info.tone} title={info.tooltip}>
-      <span>{info.label}</span>
-      {info.detail && <span className="btw-badge-detail">{info.detail}</span>}
+      <span>
+        {info.label}
+        {info.detail && (
+          <span className="btw-badge-detail">: {info.detail}</span>
+        )}
+      </span>
     </span>
   );
 }
