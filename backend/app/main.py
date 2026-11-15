@@ -17,8 +17,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from .account import AccountService
 from .bot import Bot
 from .config import BOT_MODE, CORS_ORIGINS, HISTORY_DAYS_DEFAULT, HISTORY_DAYS_MAX, SYMBOL
+from .events import EventHub
 from .exchange import connect_testnet, get_symbol_rules
-from .schemas import AccountSnapshot, BotStatus, Execution, OpenOrder, Position
+from .schemas import BotStatus, Execution, OpenOrder, Position
 
 KEEP_ALIVE_SECONDS = 15   # comment line on idle streams so proxies do not close them
 
@@ -31,9 +32,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Connect to the testnet, start the account poller and (unless BOT_MODE=off) the bot."""
     client = await asyncio.to_thread(connect_testnet)
     rules = await asyncio.to_thread(get_symbol_rules, client, SYMBOL)
-    account = AccountService(client, rules)
-    bot = Bot(client, rules, account, BOT_MODE)
-    app.state.account, app.state.bot = account, bot
+    hub = EventHub()
+    account = AccountService(client, rules, hub)
+    bot = Bot(client, rules, account, BOT_MODE, hub)
+    app.state.account, app.state.bot, app.state.hub = account, bot, hub
 
     tasks = [asyncio.create_task(account.poll_forever())]
     if BOT_MODE != "off":
@@ -88,26 +90,32 @@ async def bot_status(request: Request) -> BotStatus:
     return request.app.state.bot.status
 
 
-def sse_event(snapshot: AccountSnapshot) -> str:
-    return f"event: account\ndata: {snapshot.model_dump_json()}\n\n"
+def sse_message(event: str, data: str) -> str:
+    """One Server-Sent Events message: the event name and a JSON payload."""
+    return f"event: {event}\ndata: {data}\n\n"
 
 
 @app.get("/api/stream")
 async def stream(request: Request) -> StreamingResponse:
-    """Server-Sent Events: the full account snapshot now, then again whenever it changes."""
-    account = account_of(request)
-    queue = account.subscribe()
+    """Server-Sent Events. Event `account`: the account snapshot. Event `bot`: the bot status.
+    Both are sent once on connect, then again whenever they change."""
+    account, hub = account_of(request), request.app.state.hub
+    subscriber = hub.subscribe()   # subscribe first, so nothing published during the first reads is lost
 
     async def events() -> AsyncIterator[str]:
         try:
-            yield sse_event(await account.current())
+            yield sse_message("account", (await account.current()).model_dump_json())
+            yield sse_message("bot", request.app.state.bot.status.model_dump_json())
             while not await request.is_disconnected():
                 try:
-                    yield sse_event(await asyncio.wait_for(queue.get(), timeout=KEEP_ALIVE_SECONDS))
+                    batch = await subscriber.next_batch(KEEP_ALIVE_SECONDS)
                 except TimeoutError:
                     yield ": keep-alive\n\n"
+                    continue
+                for event, data in batch.items():
+                    yield sse_message(event, data)
         finally:
-            account.unsubscribe(queue)
+            hub.unsubscribe(subscriber)
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

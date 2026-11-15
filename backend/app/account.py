@@ -8,6 +8,7 @@ from decimal import Decimal
 from binance.client import Client
 
 from .config import ACCOUNT_POLL_SECONDS, HISTORY_DAYS_DEFAULT
+from .events import EventHub
 from .exchange import SymbolRules, fetch_my_trades, fetch_open_orders
 from .schemas import AccountSnapshot, Execution, OpenOrder, Position
 
@@ -67,15 +68,15 @@ def executions_since(executions: list[Execution], days: int) -> list[Execution]:
 
 
 class AccountService:
-    """Keeps the latest account snapshot and pushes it to stream listeners when it changes."""
+    """Keeps the latest account snapshot and publishes it to the stream when it changes."""
 
-    def __init__(self, client: Client, rules: SymbolRules) -> None:
+    def __init__(self, client: Client, rules: SymbolRules, hub: EventHub) -> None:
         self._client = client
         self._rules = rules
+        self._hub = hub
         self._lock = asyncio.Lock()
         self._snapshot: AccountSnapshot | None = None
         self._executions: list[Execution] = []      # all known executions, oldest first
-        self._listeners: set[asyncio.Queue[AccountSnapshot]] = set()
 
     def _fetch(self) -> tuple[list[dict], list[dict]]:
         """Blocking Binance calls (run in a worker thread)."""
@@ -89,6 +90,8 @@ class AccountService:
             executions = group_fills_by_order(fills)
             snapshot = AccountSnapshot(
                 symbol=self._rules.symbol,
+                base_asset=self._rules.base_asset,
+                quote_asset=self._rules.quote_asset,
                 position=position_from_executions(executions, self._rules),
                 open_orders=sorted((to_open_order(o) for o in raw_orders), key=lambda o: o.time, reverse=True),
                 executions=executions_since(executions, HISTORY_DAYS_DEFAULT),
@@ -98,7 +101,7 @@ class AccountService:
                        or snapshot.model_dump(exclude={"updated_at"}) != self._snapshot.model_dump(exclude={"updated_at"}))
             self._snapshot, self._executions = snapshot, executions
         if changed:
-            self._notify(snapshot)
+            self._hub.publish("account", snapshot.model_dump_json())
         return snapshot
 
     async def current(self) -> AccountSnapshot:
@@ -113,25 +116,10 @@ class AccountService:
         await self.current()
         return executions_since(self._executions, days)
 
-    def subscribe(self) -> asyncio.Queue[AccountSnapshot]:
-        """New listener; it always receives the newest snapshot (older unread ones are dropped)."""
-        queue: asyncio.Queue[AccountSnapshot] = asyncio.Queue(maxsize=1)
-        self._listeners.add(queue)
-        return queue
-
-    def unsubscribe(self, queue: asyncio.Queue[AccountSnapshot]) -> None:
-        self._listeners.discard(queue)
-
-    def _notify(self, snapshot: AccountSnapshot) -> None:
-        for queue in self._listeners:
-            if queue.full():
-                queue.get_nowait()
-            queue.put_nowait(snapshot)
-
     async def poll_forever(self) -> None:
-        """Refresh every ACCOUNT_POLL_SECONDS while someone is listening."""
+        """Refresh every ACCOUNT_POLL_SECONDS while someone is listening to the stream."""
         while True:
-            if self._listeners:
+            if self._hub.has_subscribers:
                 try:
                     await self.refresh()
                 except Exception as error:   # keep polling; the next round may succeed

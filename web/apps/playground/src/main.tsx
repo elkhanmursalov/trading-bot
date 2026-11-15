@@ -18,7 +18,7 @@ function Playground() {
           {theme === 'light' ? 'Dark' : 'Light'} theme
         </button>
       </div>
-      <TradingWidget theme={theme} />
+      <TradingWidget theme={theme} apiBaseUrl={import.meta.env.VITE_API_URL} />
     </main>
   );
 }

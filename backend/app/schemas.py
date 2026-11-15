@@ -43,6 +43,8 @@ class Position(BaseModel):
 class AccountSnapshot(BaseModel):
     """Everything the widget's panel and chart overlays need, sent as one object."""
     symbol: str
+    base_asset: str       # BTC
+    quote_asset: str      # USDT
     position: Position
     open_orders: list[OpenOrder]
     executions: list[Execution]

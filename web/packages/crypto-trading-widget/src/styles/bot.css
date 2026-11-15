@@ -1,0 +1,22 @@
+/* Bot badge: colour per state, next-check text */
+.btw-badge[data-tone="error"]::before {
+  background: var(--btw-down);
+}
+
+.btw-badge[data-tone="muted"]::before {
+  background: var(--btw-muted);
+}
+
+.btw-badge[data-tone="error"] {
+  color: var(--btw-down);
+}
+
+.btw-badge-detail {
+  color: var(--btw-muted);
+}
+
+@container (max-width: 700px) {
+  .btw-badge-detail {
+    display: none;
+  }
+}

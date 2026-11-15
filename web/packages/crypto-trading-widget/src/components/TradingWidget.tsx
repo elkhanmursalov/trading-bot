@@ -1,14 +1,17 @@
 import { useState } from "react";
 
-import { IntervalBar } from "./IntervalBar";
-import { PriceChart } from "./PriceChart";
-import { useResolvedTheme } from "./useResolvedTheme";
-import type { Interval, StreamStatus, Theme } from "./types";
+import { BotBadge } from "./bot/BotBadge";
+import { IntervalBar } from "./chart/IntervalBar";
+import { OrdersPanel } from "./orders/OrdersPanel";
+import { PriceChart } from "./chart/PriceChart";
+import { useAccountStream } from "../data/useAccountStream";
+import { useResolvedTheme } from "../hooks/useResolvedTheme";
+import type { Interval, StreamStatus, Theme } from "../types/widget";
 
 const STATUS_LABELS: Record<StreamStatus, string> = {
-  connecting: "Connecting",
-  live: "Live",
-  reconnecting: "Reconnecting",
+  connecting: "Price connecting",
+  live: "Price live",
+  reconnecting: "Price reconnecting",
 };
 
 export const DEFAULT_INTERVALS: Interval[] = ["1m", "5m", "15m", "1h", "4h", "1d"];
@@ -28,6 +31,12 @@ export interface TradingWidgetProps {
   chartHeight?: number;
   /** Number of past candles to load (max 1000). */
   historyLimit?: number;
+  /**
+   * Base URL of the trading backend, e.g. "https://your-app.up.railway.app".
+   * Adds the bot status and the orders panel (open orders, execution history).
+   * Without it the widget shows only the chart.
+   */
+  apiBaseUrl?: string;
   /** Override for the Binance REST base URL. */
   restUrl?: string;
   /** Override for the Binance WebSocket base URL. */
@@ -36,7 +45,7 @@ export interface TradingWidgetProps {
   className?: string;
 }
 
-/** Live price chart with interval buttons; the orders panel is added below it in a later stage. */
+/** Live price chart with interval buttons and, when `apiBaseUrl` is set, the bot status and the orders panel. */
 export function TradingWidget({
   symbol = "BTCUSDT",
   defaultInterval = "1h",
@@ -45,6 +54,7 @@ export function TradingWidget({
   theme = "light",
   chartHeight = 480,
   historyLimit = 500,
+  apiBaseUrl,
   restUrl,
   streamUrl,
   className,
@@ -52,6 +62,7 @@ export function TradingWidget({
   const [interval, setInterval] = useState<Interval>(defaultInterval);
   const resolvedTheme = useResolvedTheme(theme);
   const [status, setStatus] = useState<StreamStatus>("connecting");
+  const { account, bot, status: accountStatus } = useAccountStream(apiBaseUrl);
 
   const selectInterval = (next: Interval) => {
     setInterval(next);
@@ -63,9 +74,12 @@ export function TradingWidget({
       <div className="btw-header">
         <span className="btw-symbol">{symbol}</span>
         <IntervalBar intervals={intervals} selected={interval} onSelect={selectInterval} />
-        <span className="btw-status" data-status={status}>
-          {STATUS_LABELS[status]}
-        </span>
+        <div className="btw-badges">
+          <BotBadge bot={bot} stream={accountStatus} />
+          <span className="btw-status" data-status={status}>
+            {STATUS_LABELS[status]}
+          </span>
+        </div>
       </div>
       <PriceChart
         symbol={symbol}
@@ -77,6 +91,7 @@ export function TradingWidget({
         streamUrl={streamUrl}
         onStatusChange={setStatus}
       />
+      {apiBaseUrl && <OrdersPanel account={account} stream={accountStatus} />}
     </div>
   );
 }

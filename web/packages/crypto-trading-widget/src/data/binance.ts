@@ -1,4 +1,4 @@
-import type { Candle, Interval, StreamStatus } from "./types";
+import type { Candle, Interval, StreamStatus } from "../types/widget";
 
 export const DEFAULT_REST_URL = "https://api.binance.com";
 export const DEFAULT_STREAM_URL = "wss://stream.binance.com:9443/ws";

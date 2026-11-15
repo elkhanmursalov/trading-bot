@@ -1,0 +1,117 @@
+/* Orders panel below the chart */
+.btw-panel {
+  border-top: 1px solid var(--btw-border);
+}
+
+.btw-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--btw-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.btw-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--btw-muted);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btw-tab:hover {
+  color: var(--btw-text);
+}
+
+.btw-tab[aria-selected="true"] {
+  color: var(--btw-text);
+  box-shadow: inset 0 -2px 0 var(--btw-accent);
+}
+
+.btw-tab:focus-visible {
+  outline: 2px solid var(--btw-accent);
+  outline-offset: -2px;
+}
+
+.btw-tab-count {
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--btw-hover-bg);
+  color: var(--btw-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.btw-position {
+  padding: 8px 12px;
+  color: var(--btw-muted);
+}
+
+.btw-position b {
+  font-weight: 500;
+  color: var(--btw-text);
+}
+
+.btw-muted {
+  color: var(--btw-muted);
+}
+
+.btw-table-wrap {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.btw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.btw-table th,
+.btw-table td {
+  padding: 7px 12px;
+  text-align: left;
+}
+
+.btw-table th {
+  position: sticky;
+  top: 0;
+  background: var(--btw-head-bg);
+  color: var(--btw-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--btw-border);
+}
+
+.btw-table td {
+  border-bottom: 1px solid var(--btw-border);
+}
+
+.btw-table tbody tr:hover {
+  background: var(--btw-hover-bg);
+}
+
+.btw-table .btw-num {
+  text-align: right;
+}
+
+.btw-side[data-side="BUY"] {
+  color: var(--btw-up);
+}
+
+.btw-side[data-side="SELL"] {
+  color: var(--btw-down);
+}
+
+.btw-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--btw-muted);
+}

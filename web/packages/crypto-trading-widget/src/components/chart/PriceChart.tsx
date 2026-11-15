@@ -13,10 +13,11 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 
-import { fetchCandles, subscribeCandles } from "./binance";
-import { formatChange, formatPrice, formatTimeUtc, formatVolume } from "./format";
-import { CHART_COLORS, type ChartColors } from "./themes";
-import type { Candle, Interval, ResolvedTheme, StreamStatus } from "./types";
+import "../../styles/chart.css";
+import { fetchCandles, subscribeCandles } from "../../data/binance";
+import { formatChange, formatPrice, formatTimeUtc, formatVolume } from "../../utils/format";
+import { CHART_COLORS, type ChartColors } from "../../styles/chartColors";
+import type { Candle, Interval, ResolvedTheme, StreamStatus } from "../../types/widget";
 
 const PRICE_PANE_STRETCH = 3;
 const VOLUME_PANE_STRETCH = 1;

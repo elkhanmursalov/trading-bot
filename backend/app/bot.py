@@ -8,6 +8,7 @@ from binance.client import Client
 
 from .account import AccountService, now_ms
 from .config import CHECK_DELAY_SECONDS, INTERVAL, MAX_SLEEP_STEP_SECONDS, TRADE_SIZE_USDT
+from .events import EventHub
 from .exchange import SymbolRules, place_market_buy, place_market_sell
 from .schemas import BotStatus
 from .strategy import BUY, FAST_COLUMN, SELL, SLOW_COLUMN, latest_closed_candle
@@ -36,12 +37,18 @@ async def sleep_until(target: pd.Timestamp) -> None:
 class Bot:
     """Runs the strategy on the closed candles and places testnet orders (or only reports them in dry run)."""
 
-    def __init__(self, client: Client, rules: SymbolRules, account: AccountService, mode: str) -> None:
+    def __init__(self, client: Client, rules: SymbolRules, account: AccountService, mode: str,
+                 hub: EventHub) -> None:
         self._client = client
         self._rules = rules
         self._account = account
+        self._hub = hub
         self.status = BotStatus(mode=mode, symbol=rules.symbol, interval=INTERVAL,
                                 last_check=None, last_message=None, last_error=None, next_check=None)
+
+    def _publish_status(self) -> None:
+        """Send the current bot status to the stream."""
+        self._hub.publish("bot", self.status.model_dump_json())
 
     def _describe(self, side: str, quantity: float, amount: float) -> str:
         return f"{side} {format_amount(quantity)} {self._rules.base_asset} for {amount:,.2f} {self._rules.quote_asset}"
@@ -92,4 +99,5 @@ class Bot:
             self.status.last_check = now_ms()
             target = next_check_time(INTERVAL)
             self.status.next_check = int(target.timestamp() * 1000)
+            self._publish_status()
             await sleep_until(target)

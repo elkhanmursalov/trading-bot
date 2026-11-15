@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
-      { find: /^@elkhanmursalov\/crypto-trading-widget\/style\.css$/, replacement: `${widgetSrc}/styles.css` },
+      { find: /^@elkhanmursalov\/crypto-trading-widget\/style\.css$/, replacement: `${widgetSrc}/styles/base.css` },
       { find: /^@elkhanmursalov\/crypto-trading-widget$/, replacement: `${widgetSrc}/index.ts` },
     ],
   },

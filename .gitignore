@@ -1,5 +1,6 @@
-# Secrets: Binance API keys (live and testnet)
+# Secrets: Binance API keys (live and testnet), and local env overrides
 .env
+.env.local
 
 # Bot order logs, created when the notebook bot runs
 logs/

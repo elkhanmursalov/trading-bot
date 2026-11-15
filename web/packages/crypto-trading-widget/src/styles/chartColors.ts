@@ -1,4 +1,4 @@
-import type { ResolvedTheme } from "./types";
+import type { ResolvedTheme } from "../types/widget";
 
 /** Colours used inside the chart canvas (CSS variables cannot reach it). */
 export interface ChartColors {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { ResolvedTheme, Theme } from "./types";
+import type { ResolvedTheme, Theme } from "../types/widget";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 

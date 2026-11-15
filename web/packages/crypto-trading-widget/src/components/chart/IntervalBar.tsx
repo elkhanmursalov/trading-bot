@@ -1,4 +1,5 @@
-import type { Interval } from "./types";
+import "../../styles/chart.css";
+import type { Interval } from "../../types/widget";
 
 /** Button text per interval; days and weeks in capitals, as on most exchanges. */
 const INTERVAL_LABELS: Record<Interval, string> = {
